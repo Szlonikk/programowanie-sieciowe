@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 bool printable_buf(const void * buf, int len){
-    bool printable=true;
     const char * buffor=buf;
 
     for(int i=0;i<len;i++){
