@@ -13,9 +13,16 @@ void zamknijPolaczenie () {
 }
 
 int main (int argc, char const *argv[]) {
-	
+
 	int port = atoi (argv[1]);
 	
+	if(argc==2){
+		port = atoi (argv[1]);
+	}else{
+		perror("Pierwszy argumeny to numer portu");
+		return 1;
+	}
+
 	atexit (zamknijPolaczenie);
 	
 	struct sockaddr_in adres;

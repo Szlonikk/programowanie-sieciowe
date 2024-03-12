@@ -26,9 +26,15 @@ void closeConnection () {
 
 int main (int argc, char const *argv[]) {
 	
-	const char* ipv4 = argv[1];
-	int port = atoi (argv[2]);
-	
+	int port;
+    const char* ipv4;
+    if(argc==3){
+        ipv4 = argv[1];
+	    port = atoi (argv[2]);
+    }else{
+        perror("pierwszy argumeny to IPv4 drugi to numer portu");
+        return 1;
+    }
 	atexit (closeConnection);
 	
 	struct sockaddr_in adres;
