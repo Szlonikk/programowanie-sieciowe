@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -69,7 +70,7 @@ int main(int argc, char* argv[])
         perror("read");
         return 1;
     }
-    buf[cnt] = '\0'; // Dodanie znaku końca linii dla bezpiecznego wypisywania
+    buf[cnt] = '\0'; 
     printf("%s\n", buf);
 
     rc = close(sock);
