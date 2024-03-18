@@ -68,5 +68,28 @@ int main(int argc, char *argv[]){
         int words = 0, palindromes = 0;
         bool error = false;
 
+        char *token = strtok(bufor, " ");
+        while (token) {
+            if (isPalindrome(token)) {
+                palindromes++;    
+            }
+                words++;
+                token = strtok(NULL, " ");
+            }
+        if (words == 0) {
+            response = "0/0";
+        } else {
+            char *res = malloc(32);
+            sprintf(res, "%d/%d", palindromes, words);
+                response = res;
+        }
+        
+
+        if (sendto(socket, response, strlen(response), 0, (struct sockaddr *)&client, clientSize) == -1) {
+            perror("ERROR sendto()");
+            exit(EXIT_FAILURE);
+        }
+
+        if (words != 0) free(response);
     }
 }
