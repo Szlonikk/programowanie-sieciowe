@@ -6,14 +6,15 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <ctype.h>
 
 #define DATAGRAM_T 65507
 #define PORT 2020
-int socket=-1;
+int sock=-1;
 
 void closeCon (void) {
-    if(socket!=-1){
-        if (close(socket) == -1){
+    if(sock!=-1){
+        if (close(sock) == -1){
                 perror("close error");
                 exit(1);
         }
@@ -39,12 +40,12 @@ int main(int argc, char *argv[]){
 	adres.sin_port = htons(PORT);
 	adres.sin_addr.s_addr = htonl(INADDR_ANY);
 	
-	if ((socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 		perror ("ERROR socket()");
 		exit (EXIT_FAILURE);
 	}
 	
-	if (bind (socket, (struct sockaddr*)&adres, sizeof(struct sockaddr_in)) == -1) {
+	if (bind (sock, (struct sockaddr*)&adres, sizeof(struct sockaddr_in)) == -1) {
 		perror ("ERROR bind()");
 		exit (EXIT_FAILURE);
 	}
@@ -52,30 +53,30 @@ int main(int argc, char *argv[]){
         struct sockaddr_in client;
 		socklen_t clientSize = sizeof(client);
 
-		char bufor[DATAGRAM_T + 1] = {0};
+		char bufor[DATAGRAM_T] = {0};
         int received=-1;
 		
-		if (received = recvfrom(socket, bufor, DATAGRAM_T, 0, (struct sockaddr *)&client, &clientSize) == -1) {
+		if ((received = recvfrom(sock, bufor, DATAGRAM_T, 0, (struct sockaddr *)&client, &clientSize)) == -1) {
 			perror("ERROR recvfrom()");
 			continue;
 		} else if (received > 1024) {
 			const char* errorMsg = "ERROR";
-			sendto(socket, errorMsg, strlen(errorMsg), 0, (struct sockaddr *)&client, clientSize);
+			sendto(sock, errorMsg, strlen(errorMsg), 0, (struct sockaddr *)&client, clientSize);
 			continue;
 		}
 
         char *response;
         int words = 0, palindromes = 0;
-        bool error = false;
+        
 
         char *token = strtok(bufor, " ");
         while (token) {
             if (isPalindrome(token)) {
                 palindromes++;    
             }
-                words++;
-                token = strtok(NULL, " ");
-            }
+            words++;
+            token = strtok(NULL, " ");
+        }
         if (words == 0) {
             response = "0/0";
         } else {
@@ -85,7 +86,7 @@ int main(int argc, char *argv[]){
         }
         
 
-        if (sendto(socket, response, strlen(response), 0, (struct sockaddr *)&client, clientSize) == -1) {
+        if (sendto(sock, response, strlen(response), 0, (struct sockaddr *)&client, clientSize) == -1) {
             perror("ERROR sendto()");
             exit(EXIT_FAILURE);
         }
