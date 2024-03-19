@@ -82,7 +82,7 @@ int main(int argc, char *argv[]){
         } else {
             char *res = malloc(32);
             sprintf(res, "%d/%d", palindromes, words);
-                response = res;
+            response = res;
         }
         
 
