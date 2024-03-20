@@ -32,7 +32,7 @@ bool isPalindrome(char* word) {
 }
 
 bool buforCorrect(char* buf, int leng){
-    if(buf[0]==' '){
+    if(buf[0]==' ' || buf[leng]==' '){
         return false;
     }
     for(int i=0;i<leng;i++){
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]){
             words++;
             token = strtok(NULL, " ");
         }
-        if (words == 0) {
+        if (words == 0 || received==0) {
             response = "0/0";
         } else {
             char *res = malloc(32);
