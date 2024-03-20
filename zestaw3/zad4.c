@@ -31,6 +31,24 @@ bool isPalindrome(char* word) {
     return true;
 }
 
+bool buforCorrect(char* buf, int leng){
+    if(buf[0]==' '){
+        return false;
+    }
+    for(int i=0;i<leng;i++){
+        if(!((buf[i]>64 && buf[i]<91) || (buf[i]>96 && buf[i]<123) || buf[i]==' ')){
+            return false;
+        }
+
+        if(i<leng-1)if(buf[i]==' ' && buf[i+1]==' '){
+            return false;
+        }
+    }
+    return true;
+}
+
+/// trzeba najpierw sprawdzic czy ciag bajtow ma dobre wartosci a potem dodac \0 na koncu bo przeciez dane z internetu nie koniecznie posiadaja ten terminator
+//gcc -std=c99 -pedantic -Wall udp_server.c -lm -lpthread -o /tmp/zadanie/program
 
 int main(int argc, char *argv[]){
     atexit (closeCon);
@@ -64,6 +82,12 @@ int main(int argc, char *argv[]){
 			sendto(sock, errorMsg, strlen(errorMsg), 0, (struct sockaddr *)&client, clientSize);
 			continue;
 		}
+        if(!buforCorrect(bufor,received)){
+            const char* errorMsg = "ERROR";
+			sendto(sock, errorMsg, strlen(errorMsg), 0, (struct sockaddr *)&client, clientSize);
+			continue;
+        }
+        bufor[received]='\0';
 
         char *response;
         int words = 0, palindromes = 0;
