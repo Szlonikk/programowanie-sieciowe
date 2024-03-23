@@ -32,7 +32,7 @@ bool isPalindrome(char* word) {
 }
 
 bool buforCorrect(char* buf, int leng){
-    if(buf[0]==' ' || buf[leng]==' '){
+    if(buf[0]==' ' || buf[leng-1]==' '){
         return false;
     }
     for(int i=0;i<leng;i++){
@@ -40,7 +40,7 @@ bool buforCorrect(char* buf, int leng){
             return false;
         }
 
-        if(i<leng-1)if(buf[i]==' ' && buf[i+1]==' '){
+        if(i<leng-2)if(buf[i]==' ' && buf[i+1]==' '){
             return false;
         }
     }
