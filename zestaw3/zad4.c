@@ -8,7 +8,7 @@
 #include <limits.h>
 #include <ctype.h>
 
-#define DATAGRAM_T 65507
+#define DATAGRAM_T 65536
 #define PORT 2020
 int sock=-1;
 
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
         struct sockaddr_in client;
 		socklen_t clientSize = sizeof(client);
 
-		char bufor[DATAGRAM_T] = {0};
+		char bufor[DATAGRAM_T+1] = {0};
         int received=-1;
 		
 		if ((received = recvfrom(sock, bufor, DATAGRAM_T, 0, (struct sockaddr *)&client, &clientSize)) == -1) {
