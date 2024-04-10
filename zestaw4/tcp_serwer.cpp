@@ -41,8 +41,8 @@ void handleClient(int clientSocket) {
     std::string buffer;
 
     while (true) {
-        char tempBuffer[BUFFER_SIZE];
-        memset(tempBuffer, 0, BUFFER_SIZE);
+    char tempBuffer[BUFFER_SIZE];
+    memset(tempBuffer, 0, BUFFER_SIZE);
         ssize_t bytesRead = recv(clientSocket, tempBuffer, BUFFER_SIZE - 2, 0);
 
         if (bytesRead <= 0) {
