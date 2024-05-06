@@ -25,12 +25,10 @@ bool isPalindrome(const std::string& word) {
 
 bool isLineValid(const std::string& line) {
     std::string trimmed = line;
+    // Remove trailing newline characters
     trimmed.erase(std::remove(trimmed.begin(), trimmed.end(), '\r'), trimmed.end());
     trimmed.erase(std::remove(trimmed.begin(), trimmed.end(), '\n'), trimmed.end());
 
-    if (trimmed.front() == ' ' || trimmed.back() == ' ') {
-        return false;
-    }
     if (trimmed.find("  ") != std::string::npos) {
         return false;
     }
@@ -40,44 +38,50 @@ bool isLineValid(const std::string& line) {
 }
 
 void handleClient(int clientSocket) {
-    char buffer[BUFFER_SIZE];
+    std::string buffer;
+
     while (true) {
-        memset(buffer, 0, BUFFER_SIZE);
-        ssize_t bytesRead = recv(clientSocket, buffer, BUFFER_SIZE - 2, 0);
+    char tempBuffer[BUFFER_SIZE];
+    memset(tempBuffer, 0, BUFFER_SIZE);
+        ssize_t bytesRead = recv(clientSocket, tempBuffer, BUFFER_SIZE - 2, 0);
 
         if (bytesRead <= 0) {
+            std::cout << "Connection closed or error occurred, closing socket." << std::endl;
             break;
         }
 
-        std::string data(buffer, bytesRead);
-        if (data.substr(data.length() - 2) != "\r\n") {
-            data += "\r\n";
-        }
+        buffer.append(tempBuffer, bytesRead);
 
-        std::string response;
+        size_t pos;
+        while ((pos = buffer.find("\r\n")) != std::string::npos) {
+            std::string line = buffer.substr(0, pos);
+            buffer.erase(0, pos + 2); 
 
-        if (!isLineValid(data)) {
-            response = "ERROR\r\n";
-        } else {
-            std::istringstream iss(data);
-            std::string word;
-            int words = 0, palindromes = 0;
-            while (iss >> word) {
-                words++;
-                if (isPalindrome(word)) {
-                    palindromes++;
+            std::string response;
+            if (!isLineValid(line)) {
+                response = "ERROR\r\n";
+            } else {
+                std::istringstream iss(line);
+                std::string word;
+                int words = 0, palindromes = 0;
+                while (iss >> word) {
+                    words++;
+                    if (isPalindrome(word)) {
+                        palindromes++;
+                    }
                 }
+                std::ostringstream oss;
+                oss << palindromes << "/" << words << "\r\n";
+                response = oss.str();
             }
-            std::ostringstream oss;
-            oss << palindromes << "/" << words << "\r\n";
-            response = oss.str();
-        }
 
-        send(clientSocket, response.c_str(), response.length(), 0);
+            send(clientSocket, response.c_str(), response.length(), 0);
+        }
     }
 
     close(clientSocket);
 }
+
 
 int main() {
     int serverSocket, clientSocket;
@@ -105,6 +109,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    std::cout << "Server is running and waiting for connections..." << std::endl;
 
     while (true) {
         clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientAddrSize);
@@ -113,7 +118,7 @@ int main() {
             continue;
         }
 
-        
+        std::cout << "Accepted new connection." << std::endl;
         std::thread(handleClient, clientSocket).detach();
     }
 
