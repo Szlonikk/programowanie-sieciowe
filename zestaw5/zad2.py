@@ -5,7 +5,7 @@ def check_website(url, expected_string):
     response = requests.get(url)
 
     if response.status_code != 200:
-        print("Nieudane połączenie: status", response.status_code)
+        print("Nieudane polaczenie: status", response.status_code)
         return False
 
     content_type = response.headers.get('Content-Type')
