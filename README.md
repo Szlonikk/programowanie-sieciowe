@@ -13,3 +13,5 @@ Proste sprawdzenie statusu strony internetowej
 Pobranie informacji z strony internetowej
 ### Zestaw7 
 Praca z API 
+### Zestaw8
+Aplikacja rest
