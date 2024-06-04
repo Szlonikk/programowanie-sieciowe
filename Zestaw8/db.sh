@@ -24,12 +24,23 @@ INSERT INTO osoby VALUES (1, 'Anna', 'Nowak', '+48124569988',
     'Rynek Główny 2, 30-001 Kraków');
 INSERT INTO osoby VALUES (2, 'Jan', 'Kowalski', '+48127770022',
     'ul. Podzamcze 1, 31-001 Kraków');
+    
+CREATE TABLE psy (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    imie VARCHAR,
+    rasa TEXT,
+    owner_id INTEGER,
+    FOREIGN KEY(owner_id) REFERENCES osoby(id)
+);
+INSERT INTO psy VALUES (1, 'Burek', 'kundel', 1);
+INSERT INTO psy VALUES (2, 'Azor', 'owczarek niemiecki', 2);
 "
 
 # Dla pewności wypisz na ekran jej zawartość.
 
 echo "Początkowa zawartość bazy:"
 sqlite3 --header osoby.sqlite "SELECT * FROM osoby"
+sqlite3 --header osoby.sqlite "SELECT * FROM psy"
 
 # Uruchom w tle serwer z webaplikacją.
 
@@ -68,11 +79,30 @@ echo
 echo "Test 5: pobieranie całej bazy"
 curl http://127.0.0.1:8000/osoby
 
+# Testy dla tabeli psy:
+
+echo
+echo "Test 6: pobieranie rekordu psa"
+curl http://127.0.0.1:8000/psy/1
+
+echo
+echo "Test 7: dodawanie nowego psa"
+printf "imie\trasa\towner_id\n" > dane.tsv
+printf "Reksio\tbeagle\t1\n" >> dane.tsv
+curl --request POST --upload-file dane.tsv \
+        --header "Content-Type: text/tab-separated-values; charset=UTF-8" \
+        http://127.0.0.1:8000/psy
+
+echo
+echo "Test 8: usuwanie rekordu psa"
+curl --request DELETE http://127.0.0.1:8000/psy/1
+
 # I jeszcze upewnienie się co do zawartości pliku z bazą.
 
 echo
 echo "Zawartość bazy po zmianach:"
 sqlite3 --header osoby.sqlite "SELECT * FROM osoby"
+sqlite3 --header osoby.sqlite "SELECT * FROM psy"
 
 # Koniec testów, można wyłączyć serwer aplikacyjny.
 

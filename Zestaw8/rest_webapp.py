@@ -56,65 +56,78 @@ z komunikatem o jego wystąpieniu.
             s += '<p>' + detail + '</p>\n'
         s += '</body>\n</html>\n'
         self.content = s.encode('UTF-8')
+        self.headers = [ ('Content-Type', 'text/html; charset=UTF-8') ]
 
     def route(self):
         '''
-Pierwszą rzeczą, którą aplikacja musi zrobić po odebraniu zapytania, jest
-sprawdzenie nazwy metody HTTP oraz nazwy zasobu. Jest to konieczne aby się
-zorientować o co klient prosi i wywołać odpowiedni fragment kodu realizujący
-jego zlecenie. Jest to tzw. routing zapytania.
-
-W niniejszej aplikacji routing jest realizowany częściowo w tej metodzie,
-a częściowo w metodach handle_table() i handle_item().
+Metoda dekodująca ścieżkę URL i wywołująca odpowiednią metodę obsługującą.
 '''
-        if self.env['PATH_INFO'] == '/osoby':
-            self.handle_table()
-            return
-        m = re.search('^/osoby/(?P<id>[0-9]+)$', self.env['PATH_INFO'])
-        if m is not None:
-            self.handle_item(m.group('id'))
-            return
-        self.failure('404 Not Found')
+        path_info = self.env['PATH_INFO']
+        if path_info == '/osoby':
+            self.handle_osoby()
+        elif path_info.startswith('/osoby/search'):
+            self.handle_osoby_search()
+        elif path_info.startswith('/osoby/'):
+            self.handle_osoba(int(path_info.split('/')[2]))
+        elif path_info == '/psy':
+            self.handle_psy()
+        elif path_info.startswith('/psy/'):
+            self.handle_pies(int(path_info.split('/')[2]))
+        else:
+            self.failure('404 Not Found')
 
-    def handle_table(self):
-        '''
-Obsługa zapytań odnoszących się do tabeli "osoby" traktowanej jako całość.
-Można ją pobrać, albo można dodać do niej nowy wiersz.
-'''
+    def handle_osoby(self):
         if self.env['REQUEST_METHOD'] == 'GET':
             colnames, rows = self.sql_select()
             self.send_rows(colnames, rows)
         elif self.env['REQUEST_METHOD'] == 'POST':
             colnames, vals = self.read_tsv()
-            q = 'INSERT INTO osoby (' + ', '.join(colnames) + ') VALUES ('
-            q += ', '.join(['?' for v in vals]) + ')'
-            id = self.sql_modify(q, vals)
-            colnames, rows = self.sql_select(id)
-            self.send_rows(colnames, rows)
+            q = 'INSERT INTO osoby (' + ','.join(colnames) + ') VALUES (' + ','.join(['?']*len(vals)) + ')'
+            self.sql_modify(q, vals)
         else:
             self.failure('501 Not Implemented')
 
-    def handle_item(self, id):
-        '''
-Obsługa zapytań odnoszących się do konkretnego wiersza w tabeli "osoby".
-Można go pobrać, zmodyfikować, albo usunąć.
-'''
+    def handle_osoby_search(self):
+        params = self.env['QUERY_STRING']
+        query = 'SELECT * FROM osoby WHERE '
+        conditions = []
+        values = []
+        if 'imie' in params:
+            conditions.append('imie = ?')
+            values.append(params['imie'])
+        if 'nazwisko' in params:
+            conditions.append('nazwisko = ?')
+            values.append(params['nazwisko'])
+        query += ' AND '.join(conditions)
+        colnames, rows = self.sql_select_query(query, values)
+        self.send_rows(colnames, rows)
+
+    def handle_osoba(self, id):
         if self.env['REQUEST_METHOD'] == 'GET':
-            colnames, rows = self.sql_select(id)
-            if len(rows) == 0:
-                self.failure('404 Not Found')
-            else:
-                self.send_rows(colnames, rows)
-        elif self.env['REQUEST_METHOD'] == 'PUT':
-            colnames, vals = self.read_tsv()
-            q = 'UPDATE osoby SET '
-            q += ', '.join([c + ' = ?' for c in colnames])
-            q += ' WHERE id = ' + str(id)
-            self.sql_modify(q, vals)
             colnames, rows = self.sql_select(id)
             self.send_rows(colnames, rows)
         elif self.env['REQUEST_METHOD'] == 'DELETE':
-            q = 'DELETE FROM osoby WHERE id = ' + str(id)
+            self.delete_person(id)
+        else:
+            self.failure('501 Not Implemented')
+
+    def handle_psy(self):
+        if self.env['REQUEST_METHOD'] == 'GET':
+            colnames, rows = self.sql_select_pies()
+            self.send_rows(colnames, rows)
+        elif self.env['REQUEST_METHOD'] == 'POST':
+            colnames, vals = self.read_tsv()
+            q = 'INSERT INTO psy (' + ','.join(colnames) + ') VALUES (' + ','.join(['?']*len(vals)) + ')'
+            self.sql_modify(q, vals)
+        else:
+            self.failure('501 Not Implemented')
+
+    def handle_pies(self, id):
+        if self.env['REQUEST_METHOD'] == 'GET':
+            colnames, rows = self.sql_select_pies(id)
+            self.send_rows(colnames, rows)
+        elif self.env['REQUEST_METHOD'] == 'DELETE':
+            q = 'DELETE FROM psy WHERE id = ' + str(id)
             self.sql_modify(q)
         else:
             self.failure('501 Not Implemented')
@@ -133,13 +146,35 @@ Można go pobrać, zmodyfikować, albo usunąć.
         for row in rows:
             s += '\t'.join([str(val) for val in row]) + '\n'
         self.content = s.encode('UTF-8')
-        self.headers = [ ('Content-Type',
-                'text/tab-separated-values; charset=UTF-8') ]
+        self.headers = [ ('Content-Type', 'text/tab-separated-values; charset=UTF-8') ]
 
     def sql_select(self, id = None):
         conn = sqlite3.connect(plik_bazy)
         crsr = conn.cursor()
         query = 'SELECT * FROM osoby'
+        if id is not None:
+            query += ' WHERE id = ' + str(id)
+        crsr.execute(query)
+        colnames = [ d[0] for d in crsr.description ]
+        rows = crsr.fetchall()
+        crsr.close()
+        conn.close()
+        return colnames, rows
+
+    def sql_select_query(self, query, params):
+        conn = sqlite3.connect(plik_bazy)
+        crsr = conn.cursor()
+        crsr.execute(query, params)
+        colnames = [ d[0] for d in crsr.description ]
+        rows = crsr.fetchall()
+        crsr.close()
+        conn.close()
+        return colnames, rows
+
+    def sql_select_pies(self, id = None):
+        conn = sqlite3.connect(plik_bazy)
+        crsr = conn.cursor()
+        query = 'SELECT * FROM psy'
         if id is not None:
             query += ' WHERE id = ' + str(id)
         crsr.execute(query)
@@ -161,6 +196,23 @@ Można go pobrać, zmodyfikować, albo usunąć.
         conn.commit()
         conn.close()
         return rowid
+
+    def delete_person(self, id):
+        # Check if the person is an owner of any dog
+        conn = sqlite3.connect(plik_bazy)
+        crsr = conn.cursor()
+        crsr.execute('SELECT id FROM psy WHERE owner_id = ?', (id,))
+        if crsr.fetchone():
+            self.failure('400 Bad Request', 'Person is an owner of a dog and cannot be deleted')
+            crsr.close()
+            conn.close()
+            return
+
+        # Delete the person
+        q = 'DELETE FROM osoby WHERE id = ?'
+        self.sql_modify(q, (id,))
+        crsr.close()
+        conn.close()
 
 if __name__ == '__main__':
     from wsgiref.simple_server import make_server
