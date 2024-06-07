@@ -88,7 +88,7 @@ curl http://127.0.0.1:8000/psy/1
 echo
 echo "Test 7: dodawanie nowego psa"
 printf "imie\trasa\towner_id\n" > dane.tsv
-printf "Reksio\tbeagle\t1\n" >> dane.tsv
+printf "Reks\tcorgi\t1\n" >> dane.tsv
 curl --request POST --upload-file dane.tsv \
         --header "Content-Type: text/tab-separated-values; charset=UTF-8" \
         http://127.0.0.1:8000/psy

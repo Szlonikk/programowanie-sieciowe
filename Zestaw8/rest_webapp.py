@@ -59,9 +59,6 @@ z komunikatem o jego wystąpieniu.
         self.headers = [ ('Content-Type', 'text/html; charset=UTF-8') ]
 
     def route(self):
-        '''
-Metoda dekodująca ścieżkę URL i wywołująca odpowiednią metodę obsługującą.
-'''
         path_info = self.env['PATH_INFO']
         if path_info == '/osoby':
             self.handle_osoby()
@@ -198,7 +195,6 @@ Metoda dekodująca ścieżkę URL i wywołująca odpowiednią metodę obsługuj�
         return rowid
 
     def delete_person(self, id):
-        # Check if the person is an owner of any dog
         conn = sqlite3.connect(plik_bazy)
         crsr = conn.cursor()
         crsr.execute('SELECT id FROM psy WHERE owner_id = ?', (id,))
@@ -208,7 +204,7 @@ Metoda dekodująca ścieżkę URL i wywołująca odpowiednią metodę obsługuj�
             conn.close()
             return
 
-        # Delete the person
+        
         q = 'DELETE FROM osoby WHERE id = ?'
         self.sql_modify(q, (id,))
         crsr.close()
